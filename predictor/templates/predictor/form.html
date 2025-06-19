@@ -6,7 +6,7 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     .sidebar-card {
-      background-color: #97c3f4; /* soft blue */
+      background-color: #97c3f4;
       border-right: 1px solid #dee2e6;
     }
     body {
@@ -63,17 +63,29 @@
             <div class="card shadow-sm h-100">
               <div class="card-body py-3">
                 <h4 class="card-title mb-4 text-center fw-bold">Enter Building Parameters</h4>
-                <form method="post">
+                <form method="post" onsubmit="showSpinner()">
                   {% csrf_token %}
                   {% for field, label in fields %}
-                    <div class="mb-3">
-                      <label class="form-label">{{ label }}</label>
-                      <input type="number" name="{{ field }}" step="any" class="form-control"
-                             value="{{ input_values|get_item:field }}" required>
-                    </div>
-                  {% endfor %}
+                        <div class="mb-3">
+                            <label class="form-label" data-bs-toggle="tooltip" data-bs-placement="top"
+                                title="Range: {{ placeholders|get_item:field|get_item:'range' }}">
+                            {{ label }}
+                            </label>
+                            <input type="number" name="{{ field }}" step="any" class="form-control"
+                                value="{{ input_values|get_item:field }}"
+                                placeholder="{{ placeholders|get_item:field|get_item:'value' }}" required>
+                        </div>
+                   {% endfor %}
                   <div class="d-grid">
                     <button type="submit" class="btn btn-primary">Predict</button>
+                  </div>
+
+                  <!-- 🔄 Spinner -->
+                  <div class="text-center mt-3" id="loading-spinner" style="display: none;">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2 text-muted small">Generating prediction...</p>
                   </div>
                 </form>
               </div>
@@ -89,14 +101,18 @@
                   <div class="row mb-4">
                     <div class="col-6">
                       <div class="border p-3 rounded bg-light text-center">
-                        <p class="mb-1 text-muted" style="font-weight: bold;">🔥 Heating Load</p>
-                        <h5 class="text-danger">{{ result.heating }} kWh/m²</h5>
+                        <p class="mb-1 text-muted fw-bold">🔥 Heating Load</p>
+                        <h5 class="text-danger">
+                          <span id="heating-load">0</span> kWh/m²
+                        </h5>
                       </div>
                     </div>
                     <div class="col-6">
                       <div class="border p-3 rounded bg-light text-center">
-                        <p class="mb-1 text-muted" style="font-weight: bold;">❄️ Cooling Load</p>
-                        <h5 class="text-primary">{{ result.cooling }} kWh/m²</h5>
+                        <p class="mb-1 text-muted fw-bold">❄️ Cooling Load</p>
+                        <h5 class="text-primary">
+                          <span id="cooling-load">0</span> kWh/m²
+                        </h5>
                       </div>
                     </div>
                   </div>
@@ -150,6 +166,40 @@
       </div>
     </div>
   </div>
+
+  <!-- 🔧 Spinner + Animation JS -->
+  <script>
+    function showSpinner() {
+      document.getElementById("loading-spinner").style.display = "block";
+    }
+
+    function animateCountUp(id, endValue) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      let start = 0;
+      const duration = 600;
+      const steps = 30;
+      const increment = endValue / steps;
+      const stepTime = duration / steps;
+
+      const timer = setInterval(() => {
+        start += increment;
+        if (start >= endValue) {
+          el.innerText = endValue.toFixed(2);
+          clearInterval(timer);
+        } else {
+          el.innerText = start.toFixed(1);
+        }
+      }, stepTime);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      {% if result %}
+        animateCountUp("heating-load", {{ result.heating }});
+        animateCountUp("cooling-load", {{ result.cooling }});
+      {% endif %}
+    });
+  </script>
 
 </body>
 </html>

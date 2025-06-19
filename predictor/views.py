@@ -32,6 +32,14 @@ MODEL_METRICS = {
     }
 }
 
+placeholders = {
+    'relative_compactness': {'value': 0.75, 'range': '0.62 – 0.98'},
+    'wall_area': {'value': 318.5, 'range': '245 – 416.5'},
+    'orientation': {'value': 3.5, 'range': '2 – 5'},
+    'glazing_area': {'value': 0.25, 'range': '0 – 0.4'},
+    'glazing_area_distribution': {'value': 3, 'range': '0 – 5'},
+}
+
 def predict_energy(request):
     result = None
     input_values = {}
@@ -55,5 +63,6 @@ def predict_energy(request):
         'fields': FIELDS,
         'result': result,
         'input_values': input_values,
-        'model_metrics': MODEL_METRICS
+        'model_metrics': MODEL_METRICS,
+        'placeholders': placeholders
     })
